@@ -1,0 +1,37 @@
+steps:
+  # Building image
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      [
+        "-c",
+        "docker build -t gcr.io/<PROJECT_ID>/<IMAGE_NAME>:$SHORT_SHA -f Dockerfile --build-arg SERV_AUTH_TOKEN=$$AUTH_TOKEN .",
+      ]
+    secretEnv: ["AUTH_TOKEN"]
+​
+  # Push Images
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "gcr.io/<PROJECT_ID>/<IMAGE_NAME>:$SHORT_SHA",
+      ]
+​
+  # Deploy container image to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "<SERVICE_NAME>"
+      - "--image"
+      - "gcr.io/<PROJECT_ID>/<IMAGE_NAME>:$SHORT_SHA"
+      - "--region"
+      - "us-central1"
+      - "--allow-unauthenticated"
+      - "--platform"
+      - "managed"
+​
+secrets:
+  - kmsKeyName: projects/<PROJECT_ID>/locations/global/keyRings/<KEY_RING_NAME>/cryptoKeys/<KEY_NAME>
+    secretEnv:
+      AUTH_TOKEN: c29tZnNkZmprZHNmc2pkasdfdsSD3asak356c2tqZm5zZGtqZm5zZGtmbnNka2pmbnNkamtmbmRza2puZmtqc2RuZmprc25ma2pkc25ma2pzZG5mamtzbmZqc2tuZmsKCg==
